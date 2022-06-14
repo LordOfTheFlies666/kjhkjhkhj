@@ -1,4 +1,24 @@
-﻿using UnityEngine;
+/*
+  ____   __   __     _      ____   __   __  _   _   ____    _   _   _  __     _    
+ |  _ \  \ \ / /    / \    |  _ \  \ \ / / | | | | / ___|  | | | | | |/ /    / \   
+ | | | |  \ V /    / _ \   | | | |  \ V /  | | | | \___ \  | |_| | | ' /    / _ \  
+ | |_| |   | |    / ___ \  | |_| |   | |   | |_| |  ___) | |  _  | | . \   / ___ \ 
+ |____/    |_|   /_/   \_\ |____/    |_|    \___/  |____/  |_| |_| |_|\_\ /_/   \_\
+                                                                                   
+  ____   __   __     _      ____   __   __     _    
+ |  _ \  \ \ / /    / \    |  _ \  \ \ / /    / \   
+ | | | |  \ V /    / _ \   | | | |  \ V /    / _ \  
+ | |_| |   | |    / ___ \  | |_| |   | |    / ___ \ 
+ |____/    |_|   /_/   \_\ |____/    |_|   /_/   \_\
+                                                    
+  _____   ____    ___   _____   _____   ____  
+ | ____| |  _ \  |_ _| |_   _| | ____| |  _ \ 
+ |  _|   | | | |  | |    | |   |  _|   | | | |
+ | |___  | |_| |  | |    | |   | |___  | |_| |
+ |_____| |____/  |___|   |_|   |_____| |____/ 
+                                              
+*/
+using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,6 +27,7 @@ using UnityEngine.Events;
 using TMPro;
 using UnityEngine.SceneManagement;
 using System.Linq;
+using UnityEngine.UI;
 
 namespace Mod
 {
@@ -23,27 +44,14 @@ namespace Mod
 		public static Sprite Acid = ModAPI.LoadSprite("Acid.png");
 		public static AudioClip acidhiss = ModAPI.LoadSound("Hiss.wav");
 		public static bool Done = false;
+		public static string MapModName = "";
 		///NAME
 		///CUSTOMSPRITES
 
 		public static PhysicalProperties phys = ModAPI.FindPhysicalProperties("Soft");
 
-		public static void CreateMap(MapSelectionMenuBehaviour mapmenuthingy, string name, string desc, Sprite thumb)
+		public static void OnLoad()
 		{
-			if (!Done)
-			{
-				Vol = ScriptableObject.CreateInstance<Map>();
-				Vol.name = name;
-				mapname = Vol.name;
-				Vol.Description = desc;
-				Vol.Thumbnail = thumb;
-				var baseplate = Resources.Load<Map>("Maps/Default");
-				Vol.Prefab = baseplate.Prefab;
-				Vol.UniqueIdentity = System.Guid.NewGuid().ToString();
-				MapRegistry.Register(Vol);
-			}
-			Done = true;
-			
 			phys.Brittleness = 0f;
 			phys.Buoyancy = 0f;
 			phys.Flammability = 0f;
@@ -56,12 +64,16 @@ namespace Mod
 			phys.Softness = 0.1f;
 			phys.LodgeStrengthMultiplier = 0.1f;
 			phys.SharpForceThresholdMultiplier = 1f;
-			mapmenuthingy.RegenerateView();
-		}
-
-		public static void OnLoad()
-		{
-			CreateMap(mapmenu, MapName, "Template", TemplateSprite);
+			// 
+			Map MapMod = ScriptableObject.CreateInstance<Map>();
+			MapMod.name = MapName;
+			MapMod.UniqueIdentity = Guid.NewGuid().ToString();
+			MapMod.Description = "Map";
+			MapMod.Thumbnail = ModAPI.LoadSprite("TEMPLATE.png");
+			MapMod.Preview = ModAPI.LoadSprite("TEMPLATE.png");
+			MapMod.Prefab = MapRegistry.GetAllMaps().ElementAt(2).Prefab;
+			MapModName = MapMod.name;
+			MapRegistry.Register(MapMod);
 		}
 
 		public static void RemoveBorders()
@@ -112,7 +124,7 @@ namespace Mod
 			{
 				NewGameobject.GetComponent<Collider2D>().enabled = false;
 			}
-			NewGameobject.transform.parent = null;
+			NewGameobject.transform.parent = GameObject.Find("Root").transform.parent;
 			NewGameobject.GetComponent<SpriteRenderer>().sortingOrder = Order;
 			NewGameobject.AddComponent<Undraggable>();
 			NewGameobject.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeAll;
@@ -149,11 +161,11 @@ namespace Mod
 			if (NoCollision)
 			{
 				foreach (var col in NewGameobject.GetComponents<Collider2D>())
-                {
+				{
 					col.enabled = false;
 				}
 			}
-			NewGameobject.transform.parent = null;
+			NewGameobject.transform.parent = GameObject.Find("Root").transform.parent;
 			NewGameobject.GetComponent<SpriteRenderer>().sortingOrder = Order;
 			NewGameobject.GetComponent<Rigidbody2D>().constraints = RigidbodyConstraints2D.FreezeAll;
 			NewGameobject.AddComponent<Undraggable>();
@@ -173,7 +185,7 @@ namespace Mod
 
 		public static void CreateSpawnable(string Name, Vector2 Pos, Vector2 Size, Quaternion Rotation, bool FacingRight, bool Frozen)
 		{
-			GameObject NewGameobject = Instantiate<GameObject>(ModAPI.FindSpawnable(Name).Prefab, Vector3.zero, Quaternion.identity); 
+			GameObject NewGameobject = Instantiate<GameObject>(ModAPI.FindSpawnable(Name).Prefab, Vector3.zero, Quaternion.identity);
 			NewGameobject.transform.position = Pos;
 			NewGameobject.transform.localScale = Size;
 			NewGameobject.transform.rotation = Rotation;
@@ -202,7 +214,7 @@ namespace Mod
 			NewGameobject.transform.position = Pos;
 			NewGameobject.transform.localScale = Size;
 			NewGameobject.transform.rotation = Rotation;
-			NewGameobject.FixColliders(); 
+			NewGameobject.FixColliders();
 			PhysicalBehaviour physicalBehaviour = NewGameobject.GetComponent<PhysicalBehaviour>();
 			if (NoCollision)
 			{
@@ -258,7 +270,7 @@ namespace Mod
 				///NewGameobject.GetComponent<SpriteRenderer>().sortingOrder = 25;
 			}
 			NewGameobject.transform.localScale = new Vector2(2533.112f, 2175.462f);
-			NewGameobject.transform.parent = null;
+			NewGameobject.transform.parent = GameObject.Find("Root").transform.parent;
 			NewGameobject.layer = LayerMask.NameToLayer("Bounds");
 		}
 
@@ -326,7 +338,7 @@ namespace Mod
 				var light = ModAPI.CreateLight(Water.transform, new Color32(255, 129, 32, 255), 15, 5);
 				Water.AddComponent<LavaBurn>();
 				foreach (var particle in Water.GetComponent<WaterBlockBehaviour>().Splash.GetComponentsInChildren<ParticleSystem>())
-                {
+				{
 					var shape2 = particle.shape;
 					var main2 = particle.main;
 					shape2.texture = Mod.Lava.texture;
@@ -361,12 +373,35 @@ namespace Mod
 		public static void Main()
 		{
 			///Don't do anything yet.
-			if (MapLoaderBehaviour.CurrentMap.UniqueIdentity == Vol.UniqueIdentity)
-            {
+			if (MapLoaderBehaviour.CurrentMap.name == MapModName)
+			{
 				Debug.Log("Setting up some stuff.");
-				///Destroy?
-				///HrrrrrgghhhhFunnyTextThatNoOneWouldGuessLolXDHAHAfunniepoopoo
+				var manager = new GameObject("managerMap");
+				manager.AddComponent<MapModManager>();
 			}
+		}
+		public static void InitilizeMap()
+		{
+			foreach(var waterBlock in GameObject.FindObjectsOfType<WaterBlockBehaviour>())
+            {
+				GameObject.Destroy(waterBlock.gameObject);
+            }
+			///Destroy?
+			///HrrrrrgghhhhFunnyTextThatNoOneWouldGuessLolXDHAHAfunniepoopoo
+		}
+	}
+	public class MapModManager : MonoBehaviour
+	{
+		private void Start()
+		{
+			var clearButton = GameObject.Find("Canvas/Catalog/settings/clear/Clear Everything");
+			clearButton.GetComponent<Button>().onClick.AddListener(() => Mod.InitilizeMap());
+			Mod.InitilizeMap();
+		}
+		private void OnDestroy()
+		{
+			var manager = new GameObject("managerMap");
+			manager.AddComponent<MapModManager>();
 		}
 	}
 
@@ -381,18 +416,18 @@ namespace Mod
 		{
 			yield return new WaitForSeconds(0f);
 			foreach (var Rig in this.gameObject.GetComponentsInChildren<Rigidbody2D>())
-            {
+			{
 				Rig.bodyType = RigidbodyType2D.Static;
 			}
 		}
 	}
 
 	public class ParticleDelay : MonoBehaviour
-    {
+	{
 		public string Particles1;
 		public float Speed1;
 		public void Awake()
-        {
+		{
 			StartCoroutine(Emit());
 		}
 
@@ -406,10 +441,10 @@ namespace Mod
 				yield return new WaitForSeconds(time);
 			}
 		}
-    }
+	}
 
 	public class LavaBurn : MonoBehaviour
-    {
+	{
 		private void FixedUpdate()
 		{
 			foreach (PhysicalBehaviour physicalBehaviour in Global.main.PhysicalObjectsInWorld)
@@ -426,14 +461,14 @@ namespace Mod
 						if (physicalBehaviour.BurnProgress < 0.95f)
 						{
 							if (physicalBehaviour.Properties.Flammability > 0.1f)
-                            {
+							{
 								physicalBehaviour.BurnProgress += 0.01f;
 								physicalBehaviour.Ignite();
 								physicalBehaviour.burnIntensity = 2f;
 							}
 							physicalBehaviour.Temperature += 10f;
 							if (physicalBehaviour.gameObject.GetComponent<LimbBehaviour>())
-                            {
+							{
 								physicalBehaviour.gameObject.transform.root.gameObject.GetComponent<PersonBehaviour>().AddPain(5f);
 							}
 						}
@@ -447,7 +482,7 @@ namespace Mod
 	{
 		public float a = 1;
 		public float b = 1;
-		public Color ACIDCOLOR = new Color(1,1,1,1);
+		public Color ACIDCOLOR = new Color(1, 1, 1, 1);
 
 		private void FixedUpdate()
 		{
@@ -472,12 +507,12 @@ namespace Mod
 							var limb = physicalBehaviour.gameObject.GetComponent<LimbBehaviour>();
 							var skin = physicalBehaviour.gameObject.GetComponent<SkinMaterialHandler>();
 							if (physicalBehaviour.gameObject.name == "Head" || physicalBehaviour.gameObject.name == "Foot" || physicalBehaviour.gameObject.name == "FootFront")
-                            {
+							{
 								limb.SkinMaterialHandler.AcidProgress += Time.deltaTime * 0.025f;
 								limb.SkinMaterialHandler.RottenProgress += Time.deltaTime * 0.025f;
 							}
-                            else
-                            {
+							else
+							{
 								limb.SkinMaterialHandler.AcidProgress += Time.deltaTime * 0.005f;
 								limb.SkinMaterialHandler.RottenProgress += Time.deltaTime * 0.005f;
 							}
@@ -522,7 +557,7 @@ namespace Mod
 							}
 						}
 						else if (physicalBehaviour.Properties.Flammability > 0.1f && !physicalBehaviour.isDisintegrated)
-                        {
+						{
 							if (physicalBehaviour.gameObject.transform.lossyScale.x < 0f && physicalBehaviour.gameObject.GetComponent<LimbBehaviour>() == null)
 							{
 								physicalBehaviour.gameObject.transform.localScale = new Vector2(Mathf.Clamp(physicalBehaviour.gameObject.transform.localScale.x + 0.0005f, -500000f, 0f), Mathf.Clamp(physicalBehaviour.gameObject.transform.localScale.y - 0.0005f, 0f, 5000000f));
@@ -655,7 +690,7 @@ namespace Mod
 				return;
 			}
 			Rigidbody2D rigidbody = physicalBehaviour.rigidbody;
-			GameObject gameObject = PoolGenerator.Instance.RequestPrefab(this.Splash, this.Trigger.bounds.ClosestPoint(collision.transform.position));
+			GameObject gameObject = UnityEngine.Object.Instantiate<GameObject>(this.Splash, this.Trigger.bounds.ClosestPoint(collision.transform.position), Quaternion.identity);
 			gameObject.SetActive(true);
 			Vector2 velocity = rigidbody.velocity;
 			velocity.y = -Mathf.Abs(velocity.y);
@@ -726,12 +761,12 @@ namespace Mod
 		{
 			this.BoilingWaterSound.SetActive(false);
 			foreach (var renderer in base.GetComponents<Renderer>())
-            {
+			{
 				if (renderer != this.SpriteRenderer)
-                {
+				{
 					renderer.enabled = false;
 				}
-            }
+			}
 			this.Trigger.enabled = false;
 			this.SpriteRenderer.enabled = false;
 			GameObject[] objectsToBeActiveIfWater = this.ObjectsToBeActiveIfWater;
@@ -864,7 +899,7 @@ namespace Mod
 		}
 
 		private void Update()
-        {
+		{
 			UpdateTemperatureState();
 		}
 
