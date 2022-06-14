@@ -1,2 +1,3 @@
 # PPGC
-Old Map Editor, but rework on 1.24+ versions
+Old Standalone Map Editor PPGC.
+Reworked 1.24+ versions People Playground.
